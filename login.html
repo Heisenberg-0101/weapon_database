@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Global Weapons Database</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at top, rgba(115, 107, 255, 0.2), transparent 25%),
+                        linear-gradient(180deg, #07192f 0%, #0f234b 45%, #08101f 100%);
+            color: #eef2ff;
+        }
+        .login-card {
+            width: min(100%, 420px);
+            padding: 32px;
+            border-radius: 24px;
+            background: rgba(10, 23, 47, 0.95);
+            border: 1px solid rgba(255,255,255,0.12);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(14px);
+        }
+        .login-card h1 {
+            margin-bottom: 16px;
+            font-size: 2rem;
+        }
+        .login-card p {
+            opacity: 0.85;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        .login-card label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #c3c8f1;
+        }
+        .login-card input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 14px;
+            background: rgba(255,255,255,0.05);
+            color: #f4f7ff;
+            margin-bottom: 18px;
+            font-size: 1rem;
+        }
+        .login-card button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 14px;
+            background: #667eea;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .login-card button:hover {
+            background: #5a6dd7;
+        }
+        .login-error {
+            margin-top: 12px;
+            color: #ff9b9b;
+            min-height: 1.2rem;
+        }
+        .login-footer {
+            margin-top: 16px;
+            opacity: 0.8;
+            font-size: 0.95rem;
+        }
+        a {
+            color: #8cc7ff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h1>Login</h1>
+        <p>Sign in to access the Global Weapons Database.</p>
+        <form id="loginForm">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Enter username" autocomplete="username" required>
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter password" autocomplete="current-password" required>
+            <button type="submit">Sign In</button>
+            <div class="login-error" id="loginError"></div>
+        </form>
+        <div class="login-footer">Use <strong>admin</strong> / <strong>password</strong> to log in.</div>
+    </div>
+    <script>
+        const authKey = 'weaponsDbLoggedIn';
+        const userKey = 'weaponsDbUser';
+        const loginForm = document.getElementById('loginForm');
+        const loginError = document.getElementById('loginError');
+
+        if (localStorage.getItem(authKey) === 'true') {
+            window.location.href = 'weapons_database.html';
+        }
+
+        loginForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (username === 'admin' && password === 'password') {
+                localStorage.setItem(authKey, 'true');
+                localStorage.setItem(userKey, username);
+                window.location.href = 'weapons_database.html';
+                return;
+            }
+
+            loginError.textContent = 'Invalid username or password. Please try again.';
+        });
+    </script>
+</body>
+</html>

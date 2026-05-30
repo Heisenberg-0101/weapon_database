@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Weapons Database</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #07192f;
+            color: #eef2ff;
+        }
+        .loader {
+            text-align: center;
+        }
+        .loader h1 {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+        .loader p {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <h1>Global Weapons Database</h1>
+        <p>Redirecting you to the secure site...</p>
+    </div>
+    <script>
+        const authKey = 'weaponsDbLoggedIn';
+        if (localStorage.getItem(authKey) === 'true') {
+            window.location.href = 'weapons_database.html';
+        } else {
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

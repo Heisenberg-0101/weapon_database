@@ -1,0 +1,1934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Weapons Database</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+            background: radial-gradient(circle at top, rgba(115, 107, 255, 0.22), transparent 28%),
+                        radial-gradient(circle at right, rgba(34, 197, 94, 0.14), transparent 22%),
+                        linear-gradient(180deg, #07192f 0%, #0f234b 45%, #08101f 100%);
+            color: #f4f7ff;
+            position: relative;
+            perspective: 1400px;
+            transform-style: preserve-3d;
+        }
+
+        .weapon-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.24;
+            animation: glowMove 22s ease-in-out infinite;
+        }
+
+        .weapon-bg svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .weapon-hologram {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            perspective: 1600px;
+            z-index: 2;
+        }
+
+        .hologram-card {
+            width: min(100%, 380px);
+            min-height: 230px;
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: rgba(13, 28, 55, 0.88);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.42);
+            overflow: hidden;
+            position: relative;
+            transform-style: preserve-3d;
+             animation: rotateModel 18s ease-in-out infinite;
+        }
+           
+
+        .hologram-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 20%, rgba(110, 95, 255, 0.25), transparent 25%),
+                        radial-gradient(circle at 20% 80%, rgba(82, 227, 194, 0.12), transparent 16%);
+            pointer-events: none;
+            opacity: 0.85;
+        }
+
+        .hologram-top {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateZ(1px);
+            pointer-events: none;
+        }
+
+        .hologram-top svg {
+            width: 75%;
+            height: auto;
+            opacity: 0.92;
+            filter: drop-shadow(0 0 18px rgba(145, 150, 255, 0.5));
+        }
+
+        .hologram-label {
+            position: absolute;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 18px;
+            background: rgba(14, 35, 68, 0.85);
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            color: #cbd5ff;
+            font-size: 0.95em;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            backdrop-filter: blur(10px);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+            transform-style: preserve-3d;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .search-filters {
+            background: rgba(9, 23, 44, 0.95);
+            padding: 25px;
+            border-radius: 18px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(14px);
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 12px;
+            font-size: 1em;
+            transition: border-color 0.3s, background 0.3s;
+            background: rgba(255, 255, 255, 0.08);
+            color: #f4f7ff;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-bar button {
+            padding: 12px 25px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+
+        .search-bar button:hover {
+            background: #764ba2;
+        }
+
+        .auth-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 24px;
+            gap: 10px;
+        }
+
+        .auth-bar button {
+            padding: 10px 18px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.14);
+            background: rgba(102, 126, 234, 0.95);
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .auth-bar button:hover {
+            background: rgba(118, 75, 162, 0.95);
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            color: #d6dcff;
+            font-size: 0.9em;
+        }
+
+        .filter-group select {
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 12px;
+            font-size: 0.95em;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.08);
+            color: #eef2ff;
+            outline: none;
+        }
+
+        .results-info {
+            color: #d8e0ff;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        .weapons-grid {
+            display: grid;
+            transform-style: preserve-3d;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .weapon-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
+            cursor: pointer;
+            transform: translateZ(0);
+            animation: float 8s ease-in-out infinite alternate;
+            position: relative;
+        }
+
+        .weapon-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.18), transparent 35%),
+                        radial-gradient(circle at bottom right, rgba(102, 126, 234, 0.16), transparent 28%);
+            opacity: 0.28;
+            pointer-events: none;
+            transform: translateZ(-1px);
+            filter: blur(1px);
+        }
+
+        .weapon-card:hover {
+            transform: translateY(-10px) rotateX(6deg) scale(1.03);
+            box-shadow: 0 28px 60px rgba(0, 0, 0, 0.45);
+        }
+
+        .weapon-header {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.98) 0%, rgba(118, 75, 162, 0.95) 100%);
+            color: white;
+            padding: 24px 22px;
+            border-bottom: 4px solid rgba(102, 126, 234, 0.8);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .weapon-header::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.22), transparent 20%);
+            opacity: 0.45;
+        }
+
+        .weapon-header h2 {
+            font-size: 1.6em;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .weapon-category {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            margin-top: 8px;
+        }
+
+        .weapon-content {
+            padding: 20px;
+        }
+
+        .detail-item {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            color: #eef2ff;
+            margin-top: 5px;
+            line-height: 1.6;
+        }
+
+        .no-results {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+            padding: 40px;
+        }
+
+        .stats-section {
+            background: rgba(9, 23, 44, 0.92);
+            padding: 25px;
+            border-radius: 18px;
+            margin-top: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 24px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.9) 100%);
+            color: white;
+            border-radius: 14px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotateX(0deg);
+            }
+            100% {
+                transform: translateY(-10px) rotateX(1deg);
+            }
+        }
+
+        @keyframes glowMove {
+            0%, 100% {
+                transform: translate3d(0, 0, 0) rotate(0deg);
+            }
+            50% {
+                transform: translate3d(-20px, 12px, 0) rotate(6deg);
+            }
+        }
+
+        @keyframes rotateModel {
+            0%, 100% {
+                transform: rotateY(-16deg) rotateX(4deg);
+            }
+            25% {
+                transform: rotateY(14deg) rotateX(3deg);
+            }
+            50% {
+                transform: rotateY(18deg) rotateX(6deg);
+            }
+            75% {
+                transform: rotateY(-10deg) rotateX(3deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .weapons-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-section {
+                flex-direction: column;
+            }
+
+            .search-bar {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="weapon-bg">
+        <svg preserveAspectRatio="xMidYMid slice" viewBox="0 0 1400 900" xmlns="http://www.w3.org/2000/svg">
+            <g fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+                <!-- Tank silhouette -->
+                <path d="M180 540 h420 l24 -52 h120 l16 -24 92 -12 74 -10" />
+                <path d="M230 520 h56 v28 h-56 z" />
+                <path d="M368 492 h42 v18 h-42 z" />
+                <path d="M398 482 h92 v30 h-92 z" />
+                <path d="M210 498 c-3 30 12 40 27 42 h284 c16 -2 30 -16 24 -44" />
+                <circle cx="256" cy="580" r="18" />
+                <circle cx="316" cy="580" r="18" />
+                <circle cx="376" cy="580" r="18" />
+                <circle cx="436" cy="580" r="18" />
+                <path d="M515 330 h348" />
+                <path d="M520 320 l18 -84 h38 l16 84" />
+                <path d="M736 334 l72 -10 18 -48 30 -2" />
+                <path d="M748 334 l28 58" />
+                <path d="M500 347 l-18 26 h-42" />
+                <path d="M620 297 l170 10" />
+                <path d="M570 340 l24 36" />
+                <path d="M560 90 l90 14 16 64 -92 4" />
+                <path d="M900 470 l160 0" />
+                <path d="M1020 470 l64 -16 22 -10" />
+                <path d="M900 430 l80 -12 40 34" />
+            </g>
+            <g fill="rgba(255,255,255,0.08)">
+                <polygon points="1075,356 1135,356 1160,388 1110,388" />
+                <polygon points="880,462 920,462 942,498 900,498" />
+                <circle cx="980" cy="402" r="14" />
+            </g>
+        </svg>
+    </div>
+    <div class="container">
+        <header>
+            <h1>🌍 Global Weapons Database</h1>
+            <p>Comprehensive information about military weapons worldwide</p>
+        </header>
+
+        <div class="auth-bar">
+            <span id="userLabel"></span>
+            <button type="button" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="weapon-hologram">
+            <div class="hologram-card">
+                <div class="hologram-top">
+                    <svg viewBox="0 0 520 260" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="holoGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#78d6ff" stop-opacity="0.9" />
+                                <stop offset="100%" stop-color="#a57aff" stop-opacity="0.7" />
+                            </linearGradient>
+                        </defs>
+                        <g fill="none" stroke="url(#holoGlow)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M72 170 h78 l12 -24 h86 l10 -16 90 -4 12 24 42 2"/>
+                            <path d="M80 170 v12 c0 14 8 20 19 20h44c11 0 17-6 17-20v-12"/>
+                            <path d="M250 130 h118 l28 32 v18 h-22 l-6 24 -28 10"/>
+                            <path d="M360 40 l84 26 10 50 -92 8"/>
+                            <path d="M118 148 l72 -50 88 6 42 20"/>
+                            <path d="M432 34 l40 -8 8 42 -50 20"/>
+                            <path d="M120 182 l-20 26 h-26"/>
+                            <path d="M392 126 l84 0"/>
+                            <circle cx="410" cy="102" r="14"/>
+                            <path d="M420 132 l26 34"/>
+                            <path d="M338 204 h90"/>
+                        </g>
+                        <g fill="rgba(255,255,255,0.12)">
+                            <path d="M32 176 h24 v22 h-24 z"/>
+                            <path d="M146 170 h18 v-18 h30 v18 h18"/>
+                            <path d="M320 148 h22 v22 h-22 z"/>
+                        </g>
+                    </svg>
+                </div>
+                <div class="hologram-label">Armor, Missile & Rifle Hologram</div>
+            </div>
+        </div>
+
+        <div class="search-filters">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search by weapon name or country...">
+                <button onclick="searchWeapons()">Search</button>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-group">
+                    <label for="categoryFilter">Category:</label>
+                    <select id="categoryFilter" onchange="filterWeapons()">
+                        <option value="">All Categories</option>
+                        <option value="Handgun">Handguns</option>
+                        <option value="Rifle">Rifles</option>
+                        <option value="SMG">Submachine Guns</option>
+                        <option value="Sniper Rifle">Sniper Rifles</option>
+                        <option value="Shotgun">Shotguns</option>
+                        <option value="Heavy Weapon">Heavy Weapons</option>
+                        <option value="Machine Gun">Machine Guns</option>
+                        <option value="Artillery">Artillery</option>
+                        <option value="Tank">Tanks</option>
+                        <option value="Missile">Missiles</option>
+                        <option value="Rocket">Rockets</option>
+                        <option value="UAV">Unmanned Aerial Vehicles</option>
+                        <option value="Fighter Jet">Fighter Jets</option>
+                        <option value="Bomber">Bombers</option>
+                        <option value="Helicopter">Helicopters</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="countryFilter">Country:</label>
+                    <select id="countryFilter" onchange="filterWeapons()">
+                        <option value="">All Countries</option>
+                        <option value="Afghanistan">Afghanistan</option>
+                        <option value="Albania">Albania</option>
+                        <option value="Algeria">Algeria</option>
+                        <option value="Andorra">Andorra</option>
+                        <option value="Angola">Angola</option>
+                        <option value="Antigua and Barbuda">Antigua and Barbuda</option>
+                        <option value="Argentina">Argentina</option>
+                        <option value="Armenia">Armenia</option>
+                        <option value="Australia">Australia</option>
+                        <option value="Austria">Austria</option>
+                        <option value="Azerbaijan">Azerbaijan</option>
+                        <option value="Bahamas">Bahamas</option>
+                        <option value="Bahrain">Bahrain</option>
+                        <option value="Bangladesh">Bangladesh</option>
+                        <option value="Barbados">Barbados</option>
+                        <option value="Belarus">Belarus</option>
+                        <option value="Belgium">Belgium</option>
+                        <option value="Belize">Belize</option>
+                        <option value="Benin">Benin</option>
+                        <option value="Bhutan">Bhutan</option>
+                        <option value="Bolivia">Bolivia</option>
+                        <option value="Bosnia and Herzegovina">Bosnia and Herzegovina</option>
+                        <option value="Botswana">Botswana</option>
+                        <option value="Brazil">Brazil</option>
+                        <option value="Brunei">Brunei</option>
+                        <option value="Bulgaria">Bulgaria</option>
+                        <option value="Burkina Faso">Burkina Faso</option>
+                        <option value="Burundi">Burundi</option>
+                        <option value="Cabo Verde">Cabo Verde</option>
+                        <option value="Cambodia">Cambodia</option>
+                        <option value="Cameroon">Cameroon</option>
+                        <option value="Canada">Canada</option>
+                        <option value="Central African Republic">Central African Republic</option>
+                        <option value="Chad">Chad</option>
+                        <option value="Chile">Chile</option>
+                        <option value="China">China</option>
+                        <option value="Colombia">Colombia</option>
+                        <option value="Comoros">Comoros</option>
+                        <option value="Congo">Congo</option>
+                        <option value="Costa Rica">Costa Rica</option>
+                        <option value="Croatia">Croatia</option>
+                        <option value="Cuba">Cuba</option>
+                        <option value="Cyprus">Cyprus</option>
+                        <option value="Czech Republic">Czech Republic</option>
+                        <option value="Democratic Republic of the Congo">Democratic Republic of the Congo</option>
+                        <option value="Denmark">Denmark</option>
+                        <option value="Djibouti">Djibouti</option>
+                        <option value="Dominica">Dominica</option>
+                        <option value="Dominican Republic">Dominican Republic</option>
+                        <option value="Ecuador">Ecuador</option>
+                        <option value="Egypt">Egypt</option>
+                        <option value="El Salvador">El Salvador</option>
+                        <option value="Equatorial Guinea">Equatorial Guinea</option>
+                        <option value="Eritrea">Eritrea</option>
+                        <option value="Estonia">Estonia</option>
+                        <option value="Eswatini">Eswatini</option>
+                        <option value="Ethiopia">Ethiopia</option>
+                        <option value="Fiji">Fiji</option>
+                        <option value="Finland">Finland</option>
+                        <option value="France">France</option>
+                        <option value="Gabon">Gabon</option>
+                        <option value="Gambia">Gambia</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Germany">Germany</option>
+                        <option value="Ghana">Ghana</option>
+                        <option value="Greece">Greece</option>
+                        <option value="Grenada">Grenada</option>
+                        <option value="Guatemala">Guatemala</option>
+                        <option value="Guinea">Guinea</option>
+                        <option value="Guinea-Bissau">Guinea-Bissau</option>
+                        <option value="Guyana">Guyana</option>
+                        <option value="Haiti">Haiti</option>
+                        <option value="Honduras">Honduras</option>
+                        <option value="Hungary">Hungary</option>
+                        <option value="Iceland">Iceland</option>
+                        <option value="India">India</option>
+                        <option value="Indonesia">Indonesia</option>
+                        <option value="Iran">Iran</option>
+                        <option value="Iraq">Iraq</option>
+                        <option value="Ireland">Ireland</option>
+                        <option value="Israel">Israel</option>
+                        <option value="Italy">Italy</option>
+                        <option value="Ivory Coast">Ivory Coast</option>
+                        <option value="Jamaica">Jamaica</option>
+                        <option value="Japan">Japan</option>
+                        <option value="Jordan">Jordan</option>
+                        <option value="Kazakhstan">Kazakhstan</option>
+                        <option value="Kenya">Kenya</option>
+                        <option value="Kiribati">Kiribati</option>
+                        <option value="Kosovo">Kosovo</option>
+                        <option value="Kuwait">Kuwait</option>
+                        <option value="Kyrgyzstan">Kyrgyzstan</option>
+                        <option value="Laos">Laos</option>
+                        <option value="Latvia">Latvia</option>
+                        <option value="Lebanon">Lebanon</option>
+                        <option value="Lesotho">Lesotho</option>
+                        <option value="Liberia">Liberia</option>
+                        <option value="Libya">Libya</option>
+                        <option value="Liechtenstein">Liechtenstein</option>
+                        <option value="Lithuania">Lithuania</option>
+                        <option value="Luxembourg">Luxembourg</option>
+                        <option value="Madagascar">Madagascar</option>
+                        <option value="Malawi">Malawi</option>
+                        <option value="Malaysia">Malaysia</option>
+                        <option value="Maldives">Maldives</option>
+                        <option value="Mali">Mali</option>
+                        <option value="Malta">Malta</option>
+                        <option value="Marshall Islands">Marshall Islands</option>
+                        <option value="Mauritania">Mauritania</option>
+                        <option value="Mauritius">Mauritius</option>
+                        <option value="Mexico">Mexico</option>
+                        <option value="Micronesia">Micronesia</option>
+                        <option value="Moldova">Moldova</option>
+                        <option value="Monaco">Monaco</option>
+                        <option value="Mongolia">Mongolia</option>
+                        <option value="Montenegro">Montenegro</option>
+                        <option value="Morocco">Morocco</option>
+                        <option value="Mozambique">Mozambique</option>
+                        <option value="Myanmar">Myanmar</option>
+                        <option value="Namibia">Namibia</option>
+                        <option value="Nauru">Nauru</option>
+                        <option value="Nepal">Nepal</option>
+                        <option value="Netherlands">Netherlands</option>
+                        <option value="New Zealand">New Zealand</option>
+                        <option value="Nicaragua">Nicaragua</option>
+                        <option value="Niger">Niger</option>
+                        <option value="Nigeria">Nigeria</option>
+                        <option value="North Korea">North Korea</option>
+                        <option value="North Macedonia">North Macedonia</option>
+                        <option value="Norway">Norway</option>
+                        <option value="Oman">Oman</option>
+                        <option value="Pakistan">Pakistan</option>
+                        <option value="Palau">Palau</option>
+                        <option value="Palestine">Palestine</option>
+                        <option value="Panama">Panama</option>
+                        <option value="Papua New Guinea">Papua New Guinea</option>
+                        <option value="Paraguay">Paraguay</option>
+                        <option value="Peru">Peru</option>
+                        <option value="Philippines">Philippines</option>
+                        <option value="Poland">Poland</option>
+                        <option value="Portugal">Portugal</option>
+                        <option value="Qatar">Qatar</option>
+                        <option value="Romania">Romania</option>
+                        <option value="Russia">Russia</option>
+                        <option value="Rwanda">Rwanda</option>
+                        <option value="Saint Kitts and Nevis">Saint Kitts and Nevis</option>
+                        <option value="Saint Lucia">Saint Lucia</option>
+                        <option value="Saint Vincent and the Grenadines">Saint Vincent and the Grenadines</option>
+                        <option value="Samoa">Samoa</option>
+                        <option value="San Marino">San Marino</option>
+                        <option value="Sao Tome and Principe">Sao Tome and Principe</option>
+                        <option value="Saudi Arabia">Saudi Arabia</option>
+                        <option value="Senegal">Senegal</option>
+                        <option value="Serbia">Serbia</option>
+                        <option value="Seychelles">Seychelles</option>
+                        <option value="Sierra Leone">Sierra Leone</option>
+                        <option value="Singapore">Singapore</option>
+                        <option value="Slovakia">Slovakia</option>
+                        <option value="Slovenia">Slovenia</option>
+                        <option value="Solomon Islands">Solomon Islands</option>
+                        <option value="Somalia">Somalia</option>
+                        <option value="South Africa">South Africa</option>
+                        <option value="South Korea">South Korea</option>
+                        <option value="South Sudan">South Sudan</option>
+                        <option value="Spain">Spain</option>
+                        <option value="Sri Lanka">Sri Lanka</option>
+                        <option value="Sudan">Sudan</option>
+                        <option value="Suriname">Suriname</option>
+                        <option value="Sweden">Sweden</option>
+                        <option value="Switzerland">Switzerland</option>
+                        <option value="Syria">Syria</option>
+                        <option value="Taiwan">Taiwan</option>
+                        <option value="Tajikistan">Tajikistan</option>
+                        <option value="Tanzania">Tanzania</option>
+                        <option value="Thailand">Thailand</option>
+                        <option value="Timor-Leste">Timor-Leste</option>
+                        <option value="Togo">Togo</option>
+                        <option value="Tonga">Tonga</option>
+                        <option value="Trinidad and Tobago">Trinidad and Tobago</option>
+                        <option value="Tunisia">Tunisia</option>
+                        <option value="Turkey">Turkey</option>
+                        <option value="Turkmenistan">Turkmenistan</option>
+                        <option value="Tuvalu">Tuvalu</option>
+                        <option value="Uganda">Uganda</option>
+                        <option value="Ukraine">Ukraine</option>
+                        <option value="United Arab Emirates">United Arab Emirates</option>
+                        <option value="UK">United Kingdom</option>
+                        <option value="USA">United States</option>
+                        <option value="Uruguay">Uruguay</option>
+                        <option value="Uzbekistan">Uzbekistan</option>
+                        <option value="Vanuatu">Vanuatu</option>
+                        <option value="Vatican City">Vatican City</option>
+                        <option value="Venezuela">Venezuela</option>
+                        <option value="Vietnam">Vietnam</option>
+                        <option value="Yemen">Yemen</option>
+                        <option value="Zambia">Zambia</option>
+                        <option value="Zimbabwe">Zimbabwe</option>
+
+                        
+                        
+
+
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="sortFilter">Sort By:</label>
+                    <select id="sortFilter" onchange="filterWeapons()">
+                        <option value="name">Name (A-Z)</option>
+                        <option value="year">year (Newest)</option>
+                        <option value="country">country</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-info" id="resultsInfo">Loading weapons database...</div>
+
+        <div class="weapons-grid" id="weaponsGrid">
+            <!-- Weapons will be rendered here -->
+        </div>
+
+        <div class="no-results" id="noResults" style="display: none;">
+            No weapons found matching your search criteria.
+        </div>
+
+        <div class="stats-section">
+            <div class="stat-box">
+                <div class="stat-number" id="totalWeapons">0</div>
+                <div class="stat-label">Total Weapons</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="totalCountries">0</div>
+                <div class="stat-label">Countries</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number" id="totalCategories">0</div>
+                <div class="stat-label">Categories</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const weaponsDatabase = [
+            // HANDGUNS
+            {
+                name: "M1911 Pistol",
+                category: "Handgun",
+                country: "USA",
+                year: 1911,
+                caliber: ".45 ACP",
+                range: "50m",
+                fireRate: "Single/Semi-automatic",
+                description: "Historic semi-automatic pistol, widely used since WWI"
+            },
+            
+            {
+                name: "Glock 17",
+                category: "Handgun",
+                country: "Austria",
+                year: 1982,
+                caliber: "9mm Parabellum",
+                range: "50m",
+                fireRate: "Semi-automatic",
+                description: "World's most popular semi-automatic pistol, widely adopted by military and police"
+            },
+            {
+                name: "Sig Sauer P226",
+                category: "Handgun",
+                country: "Switzerland",
+                year: 1992,
+                caliber: "9mm Parabellum",
+                range: "50m",
+                fireRate: "Semi-automatic",
+                description: "Professional-grade handgun used by special forces worldwide"
+            },
+            {
+                name: "Makarov PM",
+                category: "Handgun",
+                country: "Russia",
+                year: 1951,
+                caliber: "9mm Makarov",
+                range: "50m",
+                fireRate: "Semi-automatic",
+                description: "Standard-issue pistol for Soviet and Russian military"
+            },
+
+            // RIFLES
+            {
+                name: "M16 Rifle",
+                category: "Rifle",
+                country: "USA",
+                year: 1964,
+                caliber: "5.56mm NATO",
+                range: "600m",
+                fireRate: "Semi/Fully-automatic",
+                description: "Standard infantry rifle used extensively in Vietnam War and beyond"
+            },
+            {
+                name: "M4 Carbine",
+                category: "Rifle",
+                country: "USA",
+                year: 1994,
+                caliber: "5.56mm NATO",
+                range: "500m",
+                fireRate: "Semi/Fully-automatic",
+                description: "Modern compact rifle, primary weapon of US military and NATO forces"
+            },
+            {
+                name: "AK-47",
+                category: "Rifle",
+                country: "Russia",
+                year: 1947,
+                caliber: "7.62x39mm",
+                range: "400m",
+                fireRate: "Semi/Fully-automatic",
+                description: "Most recognizable rifle worldwide, known for reliability and durability"
+            },
+            {
+                name: "HK417",
+                category: "Rifle",
+                country: "Germany",
+                year: 2007,
+                caliber: "7.62mm NATO",
+                range: "800m",
+                fireRate: "Semi/Fully-automatic",
+                description: "Modern battle rifle used by special operations forces"
+            },
+            {
+                name: "INSAS Rifle",
+                category: "Rifle",
+                country: "India",
+                year: 1998,
+                caliber: "5.56mm",
+                range: "400m",
+                fireRate: "Semi/Fully-automatic",
+                description: "Standard rifle of Indian armed forces"
+            },
+            {
+                name: "Steyr AUG",
+                category: "Rifle",
+                country: "Austria",
+                year: 1978,
+                caliber: "5.56mm NATO",
+                range: "500m",
+                fireRate: "Semi/Fully-automatic",
+                description: "Bullpup-designed assault rifle used by many militaries"
+            },
+
+            // HEAVY WEAPONS
+            {
+                name: "M2 Browning",
+                category: "Heavy Weapon",
+                country: "USA",
+                year: 1933,
+                caliber: ".50 BMG",
+                range: "2000m",
+                fireRate: "500-600 rpm",
+                description: "Heavy machine gun, most powerful standard machine gun"
+            },
+            {
+                name: "MG42",
+                category: "Heavy Weapon",
+                country: "Germany",
+                year: 1942,
+                caliber: "7.92×57mm",
+                range: "1000m",
+                fireRate: "1200 rpm",
+                description: "Historic WWII machine gun, very high rate of fire"
+            },
+            {
+                name: "M134 Minigun",
+                category: "Heavy Weapon",
+                country: "USA",
+                year: 1963,
+                caliber: "7.62mm",
+                range: "1000m",
+                fireRate: "2000-6000 rpm",
+                description: "Rotary cannon with extremely high rate of fire"
+            },
+            {
+                name: "Panzerfaust",
+                category: "Heavy Weapon",
+                country: "Germany",
+                year: 1943,
+                caliber: "88mm",
+                range: "150m",
+                fireRate: "Single shot",
+                description: "Recoilless anti-tank weapon, predecessor to modern RPGs"
+            },
+            {
+                name: "RPG-7",
+                category: "Heavy Weapon",
+                country: "Russia",
+                year: 1961,
+                caliber: "40mm",
+                range: "500m",
+                fireRate: "Single shot (can reload)",
+                description: "Most widely used anti-tank and anti-personnel weapon globally"
+            },
+
+            // MISSILES
+            {
+                name: "Hellfire Missile",
+                category: "Missile",
+                country: "USA",
+                year: 1984,
+                range: "8000m",
+                guidance: "Laser/Radar guided",
+                warhead: "27kg HEAT",
+                description: "Anti-tank and anti-aircraft missile used on helicopters and drones"
+            },
+            {
+                name: "AGANI 5",
+                category: "Missile",
+                country:"India",
+                year: 2026,
+                range: "12000km",
+                guidence: "Radar",
+                warhead :"1500kg",
+                description: "ICBM and MIRV technology used and long range missile is this"
+
+            },
+            {
+                name:"K4 missile",
+                category:"missile",
+                country:"India",
+                year:2025,
+                range:"3500km",
+                guidence :"Radar based",
+                warhead:"220kg",
+                description:"this is submarine base lunch missile system capable to hit any target"
+            },
+            {
+                name:"Barak 8 air defence system",
+                category:"missile",      
+                country:"india and israel",
+                year: 2022,
+                range : "125km",
+                guidence:"radar base system",
+                warhead:"100kg",
+                description: "it is a air defence system made by patnarship of india and israel"  
+            
+            },
+            {
+                name: "Exocet Missile",
+                category: "Missile",
+                country: "France",
+                year: 1975,
+                range: "70km",
+                guidance: "Active radar homing",
+                warhead: "165kg high-explosive",
+                description: "Anti-ship missile, widely exported and used in naval conflicts"
+            
+            },
+            {
+                name: "Stinger Missile",
+                category: "Missile",
+                country: "USA",
+                year: 1981,
+                range: "8km",
+                guidance: "Infrared homing",
+                warhead: "3.2kg high-explosive",
+
+
+            },
+            {
+                name: "S-300 Missile System",
+                category: "Missile",
+                country: "Russia",
+                year: 1979,
+                range: "150km",
+                guidance: "Radar guided",
+                warhead: "Multiple warheads",
+                description: "Long-range surface-to-air missile system, highly effective against aircraft and missiles"
+
+            },
+            {
+                name: "Iron Dome",
+                category: "Missile",
+                country: "Israel",
+                year: 2000,
+                range: "70km",
+                guidance: "Radar guided",
+                warhead: "Tamir interceptor",
+                description: "Mobile air defense system designed to intercept short-range rockets and artillery shells"
+
+
+            },
+            {
+                name: "AGM-114 Hellfire",
+                category: "Missile",
+                country: "USA",
+                year: 1984,
+                range: "8000m",
+                guidance: "Laser/Radar guided",
+                warhead: "27kg HEAT",
+                description: "Air-to-surface missile used for precision strikes against armored targets"
+
+
+            },
+            {
+                name: "RIM-174 Standard ERAM",
+                category: "Missile",
+                country: "USA",
+                year: 2013,
+                range: "240km",
+                guidance: "Active radar homing",
+                warhead: "Multiple warheads",
+                description: "Extended-range surface-to-air missile used for fleet air defense"
+            },
+            {
+                name: "Patriot Missile",
+                category: "Missile",
+                country: "USA",
+                year: 1981,
+                range: "160km",
+                guidance: "Radar guided",
+                warhead: "91kg high-explosive",
+                description: "Air defense system with surface-to-air missiles"
+            },
+            {
+                name: "Tomahawk Cruise Missile",
+                category: "Missile",
+                country: "USA",
+                year: 1983,
+                range: "2400km",
+                guidance: "GPS/Terrain",
+                warhead: "454kg TLAM-C",
+                description: "Long-range cruise missile used for precision strikes"
+            },
+            {
+                name: "DF-21D Anti-Ship Ballistic Missile",
+                category: "Missile",
+                country: "China",
+                year: 2010,
+                range: "1500km",
+                guidance: "Radar/Infrared",
+                warhead: "Multiple warheads",
+                description: "Ballistic missile designed to target aircraft carriers and large ships"
+
+            },
+            {
+                name: "S-400 Triumph",
+                category: "Missile",
+                country: "Russia",
+                year: 2007,
+                range: "400km",
+                guidance: "Radar guided",
+                warhead: "Multiple warheads",
+                description: "Advanced air defense system, highly effective against modern aircraft"
+            },
+            {
+                name: "BrahMos Missile",
+                category: "Missile",
+                country: "India",
+                year: 2001,
+                range: "290km",
+                guidance: "GPS/Inertial",
+                warhead: "300kg high-explosive",
+                description: "Supersonic cruise missile, joint India-Russia development"
+            },
+            {
+                name: "AGM-65 Maverick",
+                category: "Missile",
+                country: "USA",
+                year: 1972,
+                range: "22km",
+                guidance: "Electro-optical/Infrared",
+                warhead: "125kg high-explosive",
+                description: "Air-to-surface missile used for close air support and precision strikes"
+            },
+            
+            {
+                name: "Javelin Missile",
+                category: "Missile",
+                country: "USA",
+                year: 1996,
+                range: "4500m",
+                guidance: "Infrared homing",
+                warhead: "HEAT warhead",
+                description: "Portable anti-tank missile with top-attack capability"
+            },
+
+            // ROCKETS
+            {
+                name: "MLRS (Multiple Launch Rocket System)",
+                category: "Rocket",
+                country: "USA",
+                year: 1983,
+                range: "300km",
+                warheads: "6x227mm rockets",
+                fireRate: "Up to 12 salvos/min",
+                description: "Highly mobile tactical missile launcher system"
+            },
+            {
+                name: "Grad Rocket System",
+                category: "Rocket",
+                country: "Russia",
+                year: 1963,
+                range: "45km",
+                warheads: "40x122mm rockets",
+                fireRate: "Up to 1000 rpm",
+                description: "Soviet-era rocket launcher still widely used"
+            },
+            {
+                name: "Pinaka Rocket System",
+                category: "Rocket",
+                country: "India",
+                year: 1998,
+                range: "40km",
+                warheads: "12x214mm rockets",
+                fireRate: "400 rpm",
+                description: "Long-range rocket system used by Indian Army"
+            },
+            {
+                name: "HIMARS (High Mobility Artillery Rocket System)",
+                category: "Rocket",
+                country: "USA",
+                year: 2005,
+                range: "300km",
+                warheads: "6x227mm rockets or 1 ATACMS",
+                fireRate: "Up to 12 salvos/min",
+                description: "Lightweight, highly mobile rocket artillery system",
+
+            },
+            {
+                name: "BM-30 Smerch",
+                category: "Rocket",
+                country: "Russia",
+                year: 1989,
+                range: "90km",
+                warheads: "12x300mm rockets",
+                fireRate: "Up to 1000 rpm",
+                description: "Heavy multiple rocket launcher with long range and powerful warheads"
+
+            },
+            {
+                name: "Katyusha Rocket",
+                category: "Rocket",
+                country: "Russia",
+                year: 1941,
+                range: "12km",
+                warheads: "Multiple types",
+                fireRate: "Variable",
+                description: "Historic WWII rocket launcher, still variants in use"
+            },
+            {
+                name: "BGM-109 AGM",
+                category: "Rocket",
+                country: "USA",
+                year: 1983,
+                range: "2400km",
+                warhead: "Conventional/Nuclear",
+                fireRate: "Single launch",
+                description: "Ground-launched cruise missile variant"
+            },
+
+            // FIGHTER JETS
+            {
+                name: "F-35 Lightning II",
+                category: "Fighter Jet",
+                country: "USA",
+                year: 2015,
+                speed: "Mach 1.6",
+                range: "2200km",
+                weapons: "Air-to-air/ground missiles, guns",
+                description: "Advanced stealth fighter jet, cutting-edge technology"
+            },
+            {
+                name: "F-22 Raptor",
+                category: "Fighter Jet",
+                country: "USA",
+                year: 2005,
+                speed: "Mach 2.25",
+                range: "2963km",
+                weapons: "Air-to-air missiles, cannon",
+                description: "Most advanced air superiority fighter jet"
+            },
+            {
+                name: "Su-57",
+                category: "Fighter Jet",
+                country: "Russia",
+                year: 2020,
+                speed: "Mach 2.0",
+                range: "3530km",
+                weapons: "Air-to-air/ground missiles",
+                description: "Russian stealth fighter jet, comparable to F-35"
+            },
+            {
+                name: "Rafale",
+                category: "Fighter Jet",
+                country: "France",
+                year: 2006,
+                speed: "Mach 1.8",
+                range: "3700km",
+                weapons: "Missiles, cannon, rockets",
+                description: "Highly agile multi-role fighter jet"
+            },
+            {
+                name: "EF-2000 Typhoon",
+                category: "Fighter Jet",
+                country: "Germany",
+                year: 1994,
+                speed: "Mach 2.0",
+                range: "3790km",
+                weapons: "Air-to-air missiles, cannon",
+                description: "Advanced multi-role combat fighter"
+            },
+            {
+                name: "Tejas",
+                category: "Fighter Jet",
+                country: "India",
+                year: 2015,
+                speed: "Mach 1.6",
+                range: "3000km",
+                weapons: "Air-to-air/ground weapons",
+                description: "Indigenous Indian fighter jet"
+            },
+            {
+                name: "Gripen",
+                category: "Fighter Jet",
+                country: "Sweden",
+                year: 1997,
+                speed: "Mach 1.15",
+                range: "3200km",
+                weapons: "Missiles, cannon",
+                description: "Lightweight multi-role fighter jet"
+            },
+            {
+                name: "J-10",
+                category: "Fighter Jet",
+                country: "China",
+                year: 2005,
+                speed: "Mach 1.8",
+                range: "3500km",
+                weapons: "Air-to-air/ground missiles",
+                description: "Advanced Chinese combat aircraft"
+            },
+
+            // BOMBERS
+            {
+                name: "B-52 Stratofortress",
+                category: "Bomber",
+                country: "USA",
+                year: 1955,
+                speed: "Mach 0.84",
+                range: "14080km",
+                payload: "31700kg",
+                description: "Long-range strategic bomber, active since Cold War"
+            },
+            {
+                name: "B-1 Lancer",
+                category: "Bomber",
+                country: "USA",
+                year: 1986,
+                speed: "Mach 1.25",
+                range: "9800km",
+                payload: "34000kg",
+                description: "Variable-sweep wing strategic bomber"
+            },
+            {
+                name: "B-2 Spirit",
+                category: "Bomber",
+                country: "USA",
+                year: 1997,
+                speed: "Mach 0.95",
+                range: "11100km",
+                payload: "18144kg",
+                description: "Stealth strategic bomber, invisible to radar"
+            },
+            {
+                name: "Tu-160 Blackjack",
+                category: "Bomber",
+                country: "Russia",
+                year: 1987,
+                speed: "Mach 2.05",
+                range: "12300km",
+                payload: "40000kg",
+                description: "World's largest and heaviest combat aircraft"
+            },
+
+            // HELICOPTERS
+            {
+                name: "AH-64 Apache",
+                category: "Helicopter",
+                country: "USA",
+                year: 1984,
+                speed: "278 km/h",
+                range: "1920km",
+                weapons: "Hellfire missiles, cannon",
+                description: "Advanced attack helicopter, primary anti-tank platform"
+            },
+            {
+                name: "UH-1 Iroquois (Huey)",
+                category: "Helicopter",
+                country: "USA",
+                year: 1956,
+                speed: "217 km/h",
+                range: "590km",
+                payload: "14 troops or 1600kg cargo",
+                description: "Iconic utility helicopter, widely used in Vietnam War"
+
+            },
+            {
+                name: "Mi-24 Hind",
+                category: "Helicopter",
+                country: "Russia",
+                year: 1972,
+                speed: "320 km/h",
+                range: "560km",
+                weapons: "Missiles, cannon, rockets",
+                description: "Attack transport helicopter, widely used globally"
+            },
+            {
+                name: "UH-60 Black Hawk",
+                category: "Helicopter",
+                country: "USA",
+                year: 1979,
+                speed: "296 km/h",
+                range: "2220km",
+                payload: "7256kg troop transport",
+                description: "Multipurpose tactical transport helicopter"
+            },
+            {
+                name: "Chinook CH-47",
+                category: "Helicopter",
+                country: "USA",
+                year: 1962,
+                speed: "315 km/h",
+                range: "2414km",
+                payload: "12300kg cargo",
+                description: "Heavy-lift cargo helicopter with dual rotors"
+            },
+            {
+                name: "Beretta 92FS",
+                category: "Handgun",
+                country: "Italy",
+                year: 1975,
+                caliber: "9mm Parabellum",
+                range: "50m",
+                fireRate: "Semi-automatic",
+                description: "Widely used service pistol in many armed forces and police units"
+            },
+            {
+                name: "Glock 19",
+                category: "Handgun",
+                country: "Austria",
+                year: 1988,
+                caliber: "9mm Parabellum",
+                range: "50m",
+                fireRate: "Semi-automatic",
+                description: "Compact version of the Glock 17, popular for concealed carry"
+
+            },
+            {
+                
+
+            },
+            {
+                name: "CZ 75",
+                category: "Handgun",
+                country: "Czech Republic",
+                year: 1975,
+                caliber: "9mm Parabellum",
+                range: "50m",
+                fireRate: "Semi-automatic",
+                description: "Popular European semi-automatic pistol with a solid steel frame"
+            },
+            {
+                name: "FN Five-seveN",
+                category: "Handgun",
+                country: "Belgium",
+                year: 1998,
+                caliber: "5.7x28mm",
+                range: "50m",
+                fireRate: "Semi-automatic",
+                description: "Lightweight pistol designed to penetrate body armor"
+            },
+            {
+                name: "AK-74",
+                category: "Rifle",
+                country: "Russia",
+                year: 1974,
+                caliber: "5.45x39mm",
+                range: "500m",
+                fireRate: "Semi/Fully-automatic",
+                description: "Successor to the AK-47 with improved range and accuracy"
+            },
+            {
+                name: "FN SCAR",
+                category: "Rifle",
+                country: "Belgium",
+                year: 2004,
+                caliber: "5.56mm NATO / 7.62mm NATO",
+                range: "600m",
+                fireRate: "Semi/Fully-automatic",
+                description: "Modular battle rifle used by US SOCOM and allied forces"
+            },
+            
+
+            
+            {
+                name: "MP5",
+                category: "SMG",
+                country: "Germany",
+                year: 1966,
+                caliber: "9mm Parabellum",
+                range: "200m",
+                fireRate: "800 rpm",
+                description: "Legendary submachine gun used by special forces and law enforcement worldwide"
+            },
+            {
+                name: "Uzi",
+                category: "SMG",
+                country: "Israel",
+                year: 1954,
+                caliber: "9mm Parabellum",
+                range: "200m",
+                fireRate: "600 rpm",
+                description: "Iconic compact submachine gun used in many conflict zones"
+            },
+            {
+                name: "PPSh-41",
+                category: "SMG",
+                country: "Russia",
+                year: 1941,
+                caliber: "7.62x25mm Tokarev",
+                range: "200m",
+                fireRate: "900 rpm",
+                description: "Soviet submachine gun with a high rate of fire, widely used in WWII"
+
+            },
+            {
+                name: "MP9",
+                category: "SMG",
+                country: "Switzerland",
+                year: 2004,
+                caliber: "9mm Parabellum",
+                range: "200m",
+                fireRate: "1000 rpm",
+                description: "Compact submachine gun designed for close-quarters combat"
+
+            },
+            {
+                name: "PPSH-41",
+                category: "SMG",
+                country: "Russia",
+                year: 1941,
+                caliber: "7.62x25mm Tokarev",
+                range: "200m",
+                fireRate: "900 rpm",
+                description: "Soviet submachine gun with a high rate of fire, widely used in WWII"
+
+            },
+            {
+                name: "MP7",
+                category: "SMG",
+                country: "Germany",
+                year: 2001,
+                caliber: "4.6x30mm",
+                range: "200m",
+                fireRate: "950 rpm",
+                description: "Personal defense weapon designed to penetrate body armor"
+
+
+            },
+            {
+                name: "P90",
+                category: "SMG",
+                country: "Belgium",
+                year: 1990,
+                caliber: "5.7x28mm",
+                range: "200m",
+                fireRate: "900 rpm",
+                description: "Compact personal defense weapon with a unique top-mounted magazine"
+            },
+            {
+                name: "Thompson M1928",
+                category: "SMG",
+                country: "USA",
+                year: 1928,
+                caliber: ".45 ACP",
+                range: "200m",
+                fireRate: "600-725 rpm",
+                description: "Classic submachine gun, famously used by gangsters and soldiers alike"
+
+            },
+            {
+                name: "MP40",
+                category: "SMG",
+                country: "Germany",
+                year: 1940,
+                caliber: "9mm Parabellum",
+                range: "200m",
+                fireRate: "500-550 rpm",
+                description: "Iconic WWII submachine gun, widely used by German forces"
+
+            },
+            {
+                name: "Dragunov SVD",
+                category: "Sniper Rifle",
+                country: "Russia",
+                year: 1963,
+                caliber: "7.62x54mmR",
+                range: "800m",
+                fireRate: "Semi-automatic",
+                description: "Standard Soviet designated marksman rifle"
+            },
+            {
+                name: "Barrett M82",
+                category: "Sniper Rifle",
+                country: "USA",
+                year: 1982,
+                caliber: ".50 BMG",
+                range: "1800m",
+                fireRate: "Semi-automatic",
+                description: "Heavy sniper rifle used for long-range anti-material engagements"
+            },
+            {
+                name: "Remington 870",
+                category: "Shotgun",
+                country: "USA",
+                year: 1950,
+                caliber: "12 gauge",
+                range: "40m",
+                fireRate: "Pump-action",
+                description: "One of the most popular and reliable shotguns for military, police, and civilian use"
+            },
+            {
+                name: "Mossberg 500",
+                category: "Shotgun",
+                country: "USA",
+                year: 1960,
+                caliber: "12 gauge",
+                range: "40m",
+                fireRate: "Pump-action",
+                description: "Widely used pump-action shotgun with many military and law enforcement variants"
+            },
+            {
+                name: "PKM",
+                category: "Machine Gun",
+                country: "Russia",
+                year: 1961,
+                caliber: "7.62x54mmR",
+                range: "1500m",
+                fireRate: "650 rpm",
+                description: "General-purpose machine gun used across many armed forces"
+            },
+            {
+                name: "FN MAG",
+                category: "Machine Gun",
+                country: "Belgium",
+                year: 1958,
+                caliber: "7.62mm NATO",
+                range: "1800m",
+                fireRate: "650-950 rpm",
+                description: "Reliable belt-fed machine gun used by NATO and allied militaries"
+            },
+            {
+                name:"pkm",
+                category:"machine gun",
+                country:"russia",
+                year:1961,
+                caliber:"7.62*54mmR",
+                range:"1500m",
+                firerate:"650 rpm",
+                description:"general perpose machine gun used acrose armed forces",
+
+
+            },
+            
+            {
+                name: "M1 Abrams",
+                category: "Tank",
+                country: "USA",
+                year: 1980,
+                caliber: "120mm smoothbore",
+                range: "400km",
+                fireRate: "10 rounds/min",
+                description: "Main battle tank with advanced armor and fire control systems"
+            },
+            {
+                name: "T-90",
+                category: "Tank",
+                country: "Russia",
+                year: 1993,
+                caliber: "125mm smoothbore",
+                range: "550km",
+                fireRate: "8 rounds/min",
+                description: "Modern Russian main battle tank with reactive armor"
+            },
+            {
+                name: "Leopard 2",
+                category: "Tank",
+                country: "Germany",
+                year: 1979,
+                caliber: "120mm smoothbore",
+                range: "450km",
+                fireRate: "10 rounds/min",
+                description: "Highly capable Western main battle tank used by many European armies"
+            },
+            {
+                name: "K9 Thunder",
+                category: "Artillery",
+                country: "South Korea",
+                year: 1998,
+                caliber: "155mm",
+                range: "40km",
+                fireRate: "6-8 rounds/min",
+                description: "Self-propelled howitzer with advanced automation and mobility"
+            },
+            {
+                name: "MQ-9 Reaper",
+                category: "UAV",
+                country: "USA",
+                year: 2007,
+                speed: "482 km/h",
+                range: "1850km",
+                weapons: "Hellfire missiles, laser-guided bombs",
+                description: "Armed unmanned aerial vehicle used for surveillance and strike missions"
+            },
+            {
+                name: "Bayraktar TB2",
+                category: "UAV",
+                country: "Turkey",
+                year: 2014,
+                speed: "220 km/h",
+                range: "150 km",
+                weapons: "MAM-L/MAM-C guided bombs",
+                description: "Turkish medium-altitude long-endurance drone widely exported"
+            },
+            {
+                name: "Type 99",
+                category: "Tank",
+                country: "China",
+                year: 2001,
+                caliber: "125mm smoothbore",
+                range: "450km",
+                fireRate: "8 rounds/min",
+                description: "Modern Chinese third-generation main battle tank"
+            },
+            {
+                name: "Challenger 2",
+                category: "Tank",
+                country: "UK",
+                year: 1998,
+                caliber: "120mm rifled",
+                range: "450km",
+                fireRate: "8 rounds/min",
+                description: "British main battle tank with exceptional armor protection"
+
+            },
+            {
+                name: "Leclerc",
+                category: "Tank",
+                country: "France",
+                year: 1992,
+                caliber: "120mm smoothbore",
+                range: "450km",
+                fireRate: "12 rounds/min",
+                description: "French main battle tank with advanced autoloader and fire control"
+
+            },
+            {
+                name: "Arjun MK1",
+                category: "Tank",
+                country: "India",
+                year: 2009,
+                caliber: "120mm rifled",
+                range: "500km",
+                fireRate: "6 rounds/min",
+                description: "Indian main battle tank developed for high-altitude operations"
+            }
+        ];
+
+        // Auto-generate entries to ensure 120+ weapons across all categories
+        (function ensureWeaponsCount(){
+            const desired = 200;
+            const categories = ["Handgun","Rifle","SMG","Sniper Rifle","Shotgun","Heavy Weapon","Machine Gun","Artillery","Tank","Missile","Rocket","UAV","Fighter Jet","Bomber","Helicopter"];
+            const countries = ["USA","Russia","China","Germany","France","UK","India","Israel","Japan","Sweden","Brazil","Italy","Turkey","South Korea","Canada","Australia"];
+            const calibers = {"Handgun":"9mm","Rifle":"5.56mm","SMG":"9mm","Sniper Rifle":".50 BMG","Shotgun":"12 gauge","Heavy Weapon":".50 BMG","Machine Gun":"7.62mm","Artillery":"155mm","Tank":"120mm smoothbore"};
+
+            let seed = 1;
+            while (weaponsDatabase.length < desired) {
+                const idx = weaponsDatabase.length + seed;
+                const cat = categories[idx % categories.length];
+                const country = countries[idx % countries.length];
+                const year = 1960 + (idx % 66);
+
+                const entry = {
+                    name: `${cat} Auto-${1000 + idx}`,
+                    category: cat,
+                    country: country,
+                    year: year,
+                    description: "Auto-generated placeholder entry to expand the weapons database"
+                };
+
+                if (calibers[cat]) entry.caliber = calibers[cat];
+                if (cat === 'Missile' || cat === 'Rocket') entry.range = `${50 + (idx % 950)}km`;
+                else if (cat === 'Fighter Jet' || cat === 'Bomber' || cat === 'Helicopter' || cat === 'UAV') entry.range = `${200 + (idx % 4800)}km`;
+                else entry.range = `${100 + (idx % 1900)}m`;
+
+                weaponsDatabase.push(entry);
+                seed++;
+            }
+        })();
+
+        let filteredWeapons = [...weaponsDatabase];
+
+        function renderWeapons(weapons) {
+            const grid = document.getElementById('weaponsGrid');
+            const noResults = document.getElementById('noResults');
+            const resultsInfo = document.getElementById('resultsInfo');
+
+            if (weapons.length === 0) {
+                grid.innerHTML = '';
+                noResults.style.display = 'block';
+                resultsInfo.textContent = 'No weapons found.';
+                return;
+            }
+
+            noResults.style.display = 'none';
+            resultsInfo.textContent = `Showing ${weapons.length} weapon${weapons.length > 1 ? 's' : ''}`;
+
+            grid.innerHTML = weapons.map(weapon => `
+                <div class="weapon-card">
+                    <div class="weapon-header">
+                        <h2>${weapon.name}</h2>
+                        <div class="weapon-category">${weapon.category}</div>
+                    </div>
+                    <div class="weapon-content">
+                        <div class="detail-item">
+                            <div class="detail-label">Country</div>
+                            <div class="detail-value">${weapon.country}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Year Introduced</div>
+                            <div class="detail-value">${weapon.year}</div>
+                        </div>
+                        ${weapon.caliber ? `
+                        <div class="detail-item">
+                            <div class="detail-label">Caliber</div>
+                            <div class="detail-value">${weapon.caliber}</div>
+                        </div>
+                        ` : ''}
+                        ${weapon.range ? `
+                        <div class="detail-item">
+                            <div class="detail-label">Range</div>
+                            <div class="detail-value">${weapon.range}</div>
+                        </div>
+                        ` : ''}
+                        ${weapon.fireRate ? `
+                        <div class="detail-item">
+                            <div class="detail-label">Fire Rate</div>
+                            <div class="detail-value">${weapon.fireRate}</div>
+                        </div>
+                        ` : ''}
+                        ${weapon.speed ? `
+                        <div class="detail-item">
+                            <div class="detail-label">Speed</div>
+                            <div class="detail-value">${weapon.speed}</div>
+                        </div>
+                        ` : ''}
+                        ${weapon.guidance ? `
+                        <div class="detail-item">
+                            <div class="detail-label">Guidance System</div>
+                            <div class="detail-value">${weapon.guidance}</div>
+                        </div>
+                        ` : ''}
+                        ${weapon.warhead ? `
+                        <div class="detail-item">
+                            <div class="detail-label">Warhead</div>
+                            <div class="detail-value">${weapon.warhead}</div>
+                        </div>
+                        ` : ''}
+                        ${weapon.weapons ? `
+                        <div class="detail-item">
+                            <div class="detail-label">Weapons</div>
+                            <div class="detail-value">${weapon.weapons}</div>
+                        </div>
+                        ` : ''}
+                        ${weapon.payload ? `
+                        <div class="detail-item">
+                            <div class="detail-label">Payload</div>
+                            <div class="detail-value">${weapon.payload}</div>
+                        </div>
+                        ` : ''}
+                        ${weapon.warheads ? `
+                        <div class="detail-item">
+                            <div class="detail-label">Warheads</div>
+                            <div class="detail-value">${weapon.warheads}</div>
+                        </div>
+                        ` : ''}
+                        <div class="detail-item">
+                            <div class="detail-label">Description</div>
+                            <div class="detail-value">${weapon.description}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            updateStats();
+        }
+
+        function checkLogin() {
+            if (localStorage.getItem('weaponsDbLoggedIn') !== 'true') {
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
+
+        function logout() {
+            localStorage.removeItem('weaponsDbLoggedIn');
+            localStorage.removeItem('weaponsDbUser');
+            window.location.href = 'login.html';
+        }
+
+        function setUserLabel() {
+            const username = localStorage.getItem('weaponsDbUser');
+            if (username) {
+                document.getElementById('userLabel').textContent = `Signed in as ${username}`;
+            }
+        }
+
+        function searchWeapons() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+            const country = document.getElementById('countryFilter').value;
+
+            filteredWeapons = weaponsDatabase.filter(weapon => {
+                const name = (weapon.name || '').toLowerCase();
+                const weaponCountry = (weapon.country || '').toLowerCase();
+                const description = (weapon.description || '').toLowerCase();
+                
+                const matchesSearch = !searchTerm || 
+                                    name.includes(searchTerm) ||
+                                    weaponCountry.includes(searchTerm) ||
+                                    description.includes(searchTerm);
+                const matchesCategory = !category || weapon.category === category;
+                const matchesCountry = !country || weapon.country === country;
+
+                return matchesSearch && matchesCategory && matchesCountry;
+            });
+
+            sortWeapons();
+            renderWeapons(filteredWeapons);
+        }
+
+        function filterWeapons() {
+            searchWeapons();
+        }
+
+        function sortWeapons() {
+            const sortType = document.getElementById('sortFilter').value;
+
+            switch (sortType) {
+                case 'name':
+                    filteredWeapons.sort((a, b) => a.name.localeCompare(b.name));
+                    break;
+                case 'year':
+                    filteredWeapons.sort((a, b) => b.year - a.year);
+                    break;
+                case 'country':
+                    filteredWeapons.sort((a, b) => a.country.localeCompare(b.country));
+                    break;
+            }
+        }
+
+        function updateStats() {
+            const categories = new Set(weaponsDatabase.map(w => w.category)).size;
+            const countries = new Set(weaponsDatabase.map(w => w.country)).size;
+
+            document.getElementById('totalWeapons').textContent = weaponsDatabase.length;
+            document.getElementById('totalCountries').textContent = countries;
+            document.getElementById('totalCategories').textContent = categories;
+        }
+
+        // Allow Enter key to search
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchWeapons();
+        });
+
+        // Initial load
+        if (checkLogin()) {
+            setUserLabel();
+            renderWeapons(filteredWeapons);
+        }
+    </script>
+</body>
+</html>
